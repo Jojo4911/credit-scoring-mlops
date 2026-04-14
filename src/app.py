@@ -1,11 +1,18 @@
 import gradio as gr
 import joblib
 import pandas as pd
+import time
+from datetime import datetime
+from pathlib import Path
 
 SEUIL = 0.48
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # Chargement du modèle
-model = joblib.load('models/model.joblib')
+MODEL_DIR = Path(__file__).resolve().parent.parent / "models"
+model_path = MODEL_DIR / "model.joblib"
+model = joblib.load(model_path)
 
 # Fonction de prédiction
 def predict(
@@ -78,9 +85,14 @@ def predict(
             "INSTAL_NB_PAYMENTS",
         ]
     )
+    # Démarrage timer (temps d’inférence)
+    start_time = time.time()
 
     # Calcul de la prédiction de probabilité
     y_pred_proba = model.predict_proba(df)[0][1]
+
+    # Calcul du temps d’inférence
+    inference_time = time.time() - start_time
 
     # Décision en fonction du seuil
     message = "Crédit accordé" if y_pred_proba < SEUIL else "Crédit refusé"
@@ -88,6 +100,18 @@ def predict(
     if df.isnull().sum().sum() > 10:
         message += " . Attention, un nombre faible de variable est entré. En ajoutant d'autres valeurs, le résultat sera plus précis"
     
+    csv_path = DATA_DIR / "logging.csv"
+    log_df = df.copy() # Copie du DataFrame d’entrée pour récupérer les 20 variables d’un coup
+    log_df["Y_PRED_PROBA"] = y_pred_proba
+    log_df["MESSAGE"] = message
+    log_df["TIMESTAMP"] = datetime.now()
+    log_df["INFERENCE_TIME"] = inference_time
+
+    try:
+        log_df.to_csv(path_or_buf=csv_path, index=False, mode="a", header=not(csv_path.exists()))
+    except Exception as e:
+        print(f"Erreur lors de l'écriture du fichier : {e}")
+
     return message, y_pred_proba
 
 # Définition des variables en input
