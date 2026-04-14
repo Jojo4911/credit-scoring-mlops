@@ -1,26 +1,142 @@
 import gradio as gr
-import random
+import joblib
+import pandas as pd
 
-def minimal_endpoint(income: float, age: int):
-    if age > 0:
-        if income >= 0:
-            ratio = income / age
-        else:
-            raise gr.Error("Veuillez entrer un revenu supérieur ou égal à 0")
-    else:
-        raise gr.Error("Veuillez entrer un âge supérieur à 0")
+SEUIL = 0.48
 
-    score = random.random()
+# Chargement du modèle
+model = joblib.load('models/model.joblib')
 
-    return ratio, score
+# Fonction de prédiction
+def predict(
+        ext_source_2: float,
+        ext_source_3: float,
+        ext_source_1: float,
+        bureau_bureau_debt_credit_ratio_max: float,
+        app_payment_rate: float,
+        amt_annuity: float,
+        days_employed: int,
+        amt_goods_price: float,
+        instal_instal_days_late_max: int,
+        name_education_type_higher_education: int,
+        name_family_status_married: int,
+        prev_prev_app_credit_ratio_mean: float,
+        pos_nb_entries: int,
+        days_birth: int,
+        prev_days_last_due_1st_version_max: int,
+        pos_cnt_instalment_future_mean: float,
+        instal_instal_payment_ratio_mean: float,
+        prev_name_contract_status_refused_mean: float,
+        bureau_days_enddate_fact_max: int,
+        instal_nb_payments: int,
+    ):
 
-revenu = gr.Number(label="Veuillez entrer votre revenu annuel")
-age = gr.Number(label="Veuillez entrer votre âge")
+    # Création du DataFrame d’entrée
+    df = pd.DataFrame(
+        data=[[
+            ext_source_2,
+            ext_source_3,
+            ext_source_1,
+            bureau_bureau_debt_credit_ratio_max,
+            app_payment_rate,
+            amt_annuity,
+            days_employed,
+            amt_goods_price,
+            instal_instal_days_late_max,
+            name_education_type_higher_education,
+            name_family_status_married,
+            prev_prev_app_credit_ratio_mean,
+            pos_nb_entries,
+            days_birth,
+            prev_days_last_due_1st_version_max,
+            pos_cnt_instalment_future_mean,
+            instal_instal_payment_ratio_mean,
+            prev_name_contract_status_refused_mean,
+            bureau_days_enddate_fact_max,
+            instal_nb_payments,
+        ]],
+        columns=[
+            "EXT_SOURCE_2",
+            "EXT_SOURCE_3",
+            "EXT_SOURCE_1",
+            "BUREAU_BUREAU_DEBT_CREDIT_RATIO_MAX",
+            "APP_PAYMENT_RATE",
+            "AMT_ANNUITY",
+            "DAYS_EMPLOYED",
+            "AMT_GOODS_PRICE",
+            "INSTAL_INSTAL_DAYS_LATE_MAX",
+            "NAME_EDUCATION_TYPE_Higher education",
+            "NAME_FAMILY_STATUS_Married",
+            "PREV_PREV_APP_CREDIT_RATIO_MEAN",
+            "POS_NB_ENTRIES",
+            "DAYS_BIRTH",
+            "PREV_DAYS_LAST_DUE_1ST_VERSION_MAX",
+            "POS_CNT_INSTALMENT_FUTURE_MEAN",
+            "INSTAL_INSTAL_PAYMENT_RATIO_MEAN",
+            "PREV_NAME_CONTRACT_STATUS_REFUSED_MEAN",
+            "BUREAU_DAYS_ENDDATE_FACT_MAX",
+            "INSTAL_NB_PAYMENTS",
+        ]
+    )
+
+    # Calcul de la prédiction de probabilité
+    y_pred_proba = model.predict_proba(df)[0][1]
+
+    # Décision en fonction du seuil
+    message = "Crédit accordé" if y_pred_proba < SEUIL else "Crédit refusé"
+
+    if df.isnull().sum().sum() > 10:
+        message += " . Attention, un nombre faible de variable est entré. En ajoutant d'autres valeurs, le résultat sera plus précis"
+    
+    return message, y_pred_proba
+
+# Définition des variables en input
+ext_source_2 = gr.Number(value=None, label="Veuillez entrer le score externe normalisé numéro 2")
+ext_source_3 = gr.Number(value=None, label="Veuillez entrer le score externe normalisé numéro 3")
+ext_source_1 = gr.Number(value=None, label="Veuillez entrer le score externe normalisé numéro 1")
+bureau_bureau_debt_credit_ratio_max = gr.Number(value=None, label="Veuillez entrer le ratio entre la dette et le montant du crédit (Bureau du Crédit)")
+app_payment_rate = gr.Number(value=None, label="Veuillez entrer le taux de remboursement annuel")
+amt_annuity = gr.Number(value=None, label="Veuillez entrer l'annuité du Bureau de crédit")
+days_employed = gr.Number(value=None, label="Veuillez entrer le nombre de jours de l'emploi actuel")
+amt_goods_price = gr.Number(value=None, label="Veuillez entrer le prix des biens pour lesquels le crédit est accordé")
+instal_instal_days_late_max = gr.Number(value=None, label="Veuillez entrer le retard maximum en jours")
+name_education_type_higher_education = gr.Dropdown(choices=[("Oui", 1), ("Non", 0)], label="Avez-vous fait des études supérieures ?")
+name_family_status_married = gr.Dropdown(choices=[("Oui", 1), ("Non", 0)], label="Êtes-vous marié ?")
+prev_prev_app_credit_ratio_mean = gr.Number(value=None, label="Veuillez entrer le ratio de montant accordé / montant demandé")
+pos_nb_entries = gr.Number(value=None, label="Veuillez entrer le nombre de mensualités en retard")
+days_birth = gr.Number(value=None, label="Veuillez entrer votre âge en nombre de jours")
+prev_days_last_due_1st_version_max = gr.Number(value=None, label="Veuillez entrer quand la première échéance de la demande précédente a-t-elle eu lieu ?")
+pos_cnt_instalment_future_mean = gr.Number(value=None, label="Veuillez entrer la moyenne des versements restants à effectuer sur le crédit précédent")
+instal_instal_payment_ratio_mean = gr.Number(value=None, label="Veuillez entrer la moyenne du ratio payé / dû")
+prev_name_contract_status_refused_mean = gr.Number(value=None, label="Veuillez entrer la moyenne d'offres refusées au cours du mois")
+bureau_days_enddate_fact_max = gr.Number(value=None, label="Veuillez entrer le nombre de jours écoulés depuis la clôture du crédit CB au moment de la demande auprès de Home Credit (uniquement pour les crédits clôturés)")
+instal_nb_payments = gr.Number(value=None, label="Veuillez entrer le nombre de paiement passés pour des crédits précédents")
 
 demo = gr.Interface(
-    fn=minimal_endpoint,
-    inputs=[revenu, age],
-    outputs=[gr.Textbox(label="Ratio revenu / âge :"), gr.Number(label="Score :")]
+    fn=predict,
+    inputs=[
+        ext_source_2,
+        ext_source_3,
+        ext_source_1,
+        bureau_bureau_debt_credit_ratio_max,
+        app_payment_rate,
+        amt_annuity,
+        days_employed,
+        amt_goods_price,
+        instal_instal_days_late_max,
+        name_education_type_higher_education,
+        name_family_status_married,
+        prev_prev_app_credit_ratio_mean,
+        pos_nb_entries,
+        days_birth,
+        prev_days_last_due_1st_version_max,
+        pos_cnt_instalment_future_mean,
+        instal_instal_payment_ratio_mean,
+        prev_name_contract_status_refused_mean,
+        bureau_days_enddate_fact_max,
+        instal_nb_payments,
+    ],
+    outputs=[gr.Textbox(label="Verdict :"), gr.Number(label="Probabilité de défaut de paiement :")]
 )
 
 demo.launch()
