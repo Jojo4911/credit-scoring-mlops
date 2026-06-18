@@ -873,12 +873,12 @@ dependencies = [
     { name = "gradio" },
     { name = "joblib" },
     { name = "lightgbm" },
-    { name = "pytest" },
     { name = "scikit-learn" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "pytest" },
     { name = "pytest-cov" },
 ]
 
@@ -887,12 +887,14 @@ requires-dist = [
     { name = "gradio", specifier = ">=6.11.0" },
     { name = "joblib", specifier = ">=1.5.3" },
     { name = "lightgbm", specifier = ">=4.6.0" },
-    { name = "pytest", specifier = ">=9.0.3" },
     { name = "scikit-learn", specifier = ">=1.8.0" },
 ]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pytest-cov", specifier = ">=7.1.0" }]
+dev = [
+    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest-cov", specifier = ">=7.1.0" },
+]
 
 [[package]]
 name = "pydantic"
