@@ -96,14 +96,25 @@ Ces logs servent de base pour l'analyse du data drift et le monitoring des perfo
 ## Tests
 
 ```bash
-uv run pytest --cov=src --cov-report=term-missing
+uv run --group dev pytest --cov=src --cov-report=term-missing
 ```
 
 Couverture actuelle : 94% (lignes non couvertes : gestion d'erreur d'écriture CSV, point d'entrée `__main__`).
 
 ## Déploiement
 
-*À compléter — Docker + Hugging Face Spaces*
+L'API est déployée automatiquement sur Hugging Face Spaces via le pipeline CI/CD.
+
+- **Space public** : https://huggingface.co/spaces/JonathanFernandez/pret_a_depenser
+- **Déclenchement** : push sur `main` via GitHub Actions
+- **Pipeline** : tests → build Docker → déploiement HF Spaces
+
+Pour lancer en local avec Docker :
+
+```bash
+docker build -t pret-a-depenser-api .
+docker run -p 7860:7860 pret-a-depenser-api
+```
 
 ## Monitoring
 
