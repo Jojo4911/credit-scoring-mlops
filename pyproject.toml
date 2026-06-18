@@ -1,0 +1,18 @@
+[project]
+name = "pret-a-depenser"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gradio>=6.11.0",
+    "joblib>=1.5.3",
+    "lightgbm>=4.6.0",
+    "pytest>=9.0.3",
+    "scikit-learn>=1.8.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest-cov>=7.1.0",
+]
