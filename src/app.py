@@ -5,7 +5,10 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+# Définition du seuil métier optimal déterminé au projet 6
 SEUIL = 0.48
+
+# Emplacement du fichier de logging
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -100,13 +103,13 @@ def predict(
     if df.isnull().sum().sum() > 10:
         message += " . Attention, un nombre faible de variable est entré. En ajoutant d'autres valeurs, le résultat sera plus précis"
     
+    # Remplissage du fichier de logging
     csv_path = DATA_DIR / "logging.csv"
     log_df = df.copy() # Copie du DataFrame d’entrée pour récupérer les 20 variables d’un coup
     log_df["Y_PRED_PROBA"] = y_pred_proba
     log_df["MESSAGE"] = message
     log_df["TIMESTAMP"] = datetime.now()
     log_df["INFERENCE_TIME"] = inference_time
-
     try:
         log_df.to_csv(path_or_buf=csv_path, index=False, mode="a", header=not(csv_path.exists()))
     except Exception as e:
@@ -136,6 +139,7 @@ prev_name_contract_status_refused_mean = gr.Number(value=None, label="Veuillez e
 bureau_days_enddate_fact_max = gr.Number(value=None, label="Veuillez entrer le nombre de jours écoulés depuis la clôture du crédit CB au moment de la demande auprès de Home Credit (uniquement pour les crédits clôturés)")
 instal_nb_payments = gr.Number(value=None, label="Veuillez entrer le nombre de paiement passés pour des crédits précédents")
 
+# Définition des entrées dans Gradio
 demo = gr.Interface(
     fn=predict,
     inputs=[
@@ -160,7 +164,9 @@ demo = gr.Interface(
         bureau_days_enddate_fact_max,
         instal_nb_payments,
     ],
+    # Définition des sorties dans Gradio
     outputs=[gr.Textbox(label="Verdict :"), gr.Number(label="Probabilité de défaut de paiement :")]
 )
 
-demo.launch()
+if __name__ == "__main__":
+    demo.launch()
