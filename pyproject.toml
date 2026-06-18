@@ -11,3 +11,8 @@ dependencies = [
     "pytest>=9.0.3",
     "scikit-learn>=1.8.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest-cov>=7.1.0",
+]

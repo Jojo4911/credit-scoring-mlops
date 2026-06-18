@@ -33,7 +33,8 @@ def valid_input():
 
 
 # --- Fixture de mock pour imposer un chemin temporaire au fichier CSV ---
-@pytest.fixture()
+# autouse=True : s'applique à tous les tests du fichier sans avoir besoin de le déclarer en paramètre, sauf si on veut accéder à tmp_path lui-même.
+@pytest.fixture(autouse=True)
 def path_csv(tmp_path):
     with patch("src.app.DATA_DIR", tmp_path):
         yield tmp_path
@@ -43,7 +44,8 @@ def path_csv(tmp_path):
 def test_prediction_valid_input(valid_input, path_csv):
     response_valid_input = predict(*valid_input)
     assert response_valid_input[0] == "Crédit refusé"
-    assert response_valid_input[1] > 0.48 # Seuil métier optimisé
+    assert response_valid_input[1] > 0.48  # Seuil métier optimisé
+    assert response_valid_input[1] <= 1  # Respecte la borne haute
     created_file_path = Path(path_csv / "logging.csv")
     assert created_file_path.is_file() == True
 
@@ -54,7 +56,7 @@ def test_prediction_incorrect_input(valid_input):
     incorrect_input[0] = "Hello"
     incorrect_input[4] = "world"
     with pytest.raises(ValueError):
-        response_incorrect_input = predict(*incorrect_input)
+        predict(*incorrect_input)
 
 
 # Test de prédiction avec plus de 10 valeurs manquantes
@@ -88,7 +90,7 @@ def test_prediction_out_range_input(valid_input):
 @pytest.fixture()
 def low_proba():
     with patch("src.app.model.predict_proba") as mock_low_proba:
-        mock_low_proba.return_value = [[0.53, 0.47]] # Renvoie une probabilité de 0.47
+        mock_low_proba.return_value = [[0.53, 0.47]]  # Renvoie une probabilité de 0.47
         yield
 
 
@@ -102,7 +104,7 @@ def test_thershold_approved_credit(valid_input, low_proba):
 @pytest.fixture()
 def high_proba():
     with patch("src.app.model.predict_proba") as mock_high_proba:
-        mock_high_proba.return_value = [[0.51, 0.49]] # Renvoie une probabilité de 0.49
+        mock_high_proba.return_value = [[0.51, 0.49]]  # Renvoie une probabilité de 0.49
         yield
 
 
@@ -112,4 +114,9 @@ def test_thershold_refused_credit(valid_input, high_proba):
     assert response_threshold_refused[0] == "Crédit refusé"
 
 
-# Test
+# Test de format de sortie : la proba est une probabilité valide, la décision est l'une des deux chaînes attendues par l'interface.
+def test_output_format(valid_input):
+    response = predict(*valid_input)
+    assert isinstance(response[1], float)
+    assert 0 <= response[1] <= 1
+    assert response[0] in ["Crédit accordé", "Crédit refusé"]
