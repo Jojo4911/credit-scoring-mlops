@@ -30,7 +30,8 @@ Déploiement en production d'un modèle de scoring crédit pour l'entreprise "Pr
 ├── Dockerfile
 ├── .gitignore
 ├── .env.example
-├── requirements.txt
+├── pyproject.toml
+├── uv.lock
 └── README.md
 ```
 
@@ -39,7 +40,7 @@ Déploiement en production d'un modèle de scoring crédit pour l'entreprise "Pr
 ```bash
 git clone https://github.com/Jojo4911/pret-a-depenser.git
 cd pret-a-depenser
-pip install -r requirements.txt
+uv sync
 ```
 
 ## Usage
@@ -95,8 +96,10 @@ Ces logs servent de base pour l'analyse du data drift et le monitoring des perfo
 ## Tests
 
 ```bash
-pytest tests/
+uv run pytest --cov=src --cov-report=term-missing
 ```
+
+Couverture actuelle : 94% (lignes non couvertes : gestion d'erreur d'écriture CSV, point d'entrée `__main__`).
 
 ## Déploiement
 
