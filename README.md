@@ -34,6 +34,11 @@ Déploiement en production d'un modèle de scoring crédit pour l'entreprise "Pr
 │   └── model.joblib          # Pipeline sklearn (5,5 Mo)
 ├── data/                     # Données de production et référence drift (non versionnées)
 │   └── logging.csv           # Logs des requêtes API (généré automatiquement)
+├── docs/
+│   ├── notes.md
+│   └── screenshots/
+│       ├── pipeline_success.png
+│       └── hf_space_running.png
 ├── .github/
 │   └── workflows/
 │       └── ci-cd.yml
@@ -117,7 +122,9 @@ L'API est déployée automatiquement sur Hugging Face Spaces via le pipeline CI/
 
 - **Space public** : https://huggingface.co/spaces/JonathanFernandez/pret_a_depenser
 - **Déclenchement** : push sur `main` via GitHub Actions
-- **Pipeline** : tests → build Docker → déploiement HF Spaces
+- **Pipeline** : tests → build Docker → upload vers HF Spaces via `huggingface_hub`
+
+Le modèle (5,5 Mo) est versionné en Git LFS sur GitHub. Le déploiement vers Hugging Face utilise l'API `huggingface_hub.upload_folder()` plutôt qu'un push Git classique, HF Spaces imposant leur système Xet pour les fichiers binaires de cette taille.
 
 Pour lancer en local avec Docker :
 
