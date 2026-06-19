@@ -35,14 +35,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
           lfs: true
 
       - name: Pull LFS files
         run: git lfs pull
-
-      - name: Login to Docker Hub (optionnel, pour le build)
-        run: echo "Build local uniquement, pas de push Docker Hub"
 
       - name: Build Docker image
         run: docker build -t pret-a-depenser-api .
@@ -51,9 +47,14 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git lfs install
-          git config --global user.email "ci@github.com"
-          git config --global user.name "GitHub Actions"
-          git remote add hf https://JonathanFernandez:$HF_TOKEN@huggingface.co/spaces/JonathanFernandez/pret_a_depenser
-          git lfs push hf main
-          git push hf main --force
+          pip install huggingface_hub
+          python -c "
+          from huggingface_hub import HfApi
+          api = HfApi(token='${{ secrets.HF_TOKEN }}')
+          api.upload_folder(
+              folder_path='.',
+              repo_id='JonathanFernandez/pret_a_depenser',
+              repo_type='space',
+              ignore_patterns=['.git*', 'tests/*', 'notebooks/*', '.github/*', '__pycache__/*', '*.pyc', '.venv/*', 'docs/*']
+          )
+          "
