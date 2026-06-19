@@ -99,15 +99,18 @@ def predict(
 
     # Décision en fonction du seuil
     message = "Crédit accordé" if y_pred_proba < SEUIL else "Crédit refusé"
+    status = "OK"
 
     if df.isnull().sum().sum() > 10:
         message += " . Attention, un nombre faible de variable est entré. En ajoutant d'autres valeurs, le résultat sera plus précis"
+        status = "INPUT_INCOMPLETE"
     
     # Remplissage du fichier de logging
     csv_path = DATA_DIR / "logging.csv"
     log_df = df.copy() # Copie du DataFrame d’entrée pour récupérer les 20 variables d’un coup
     log_df["Y_PRED_PROBA"] = y_pred_proba
     log_df["MESSAGE"] = message
+    log_df["STATUS"] = status
     log_df["TIMESTAMP"] = datetime.now()
     log_df["INFERENCE_TIME"] = inference_time
     try:
