@@ -18,3 +18,9 @@ CI/CD installe `huggingface_hub` et appelle l'API directement, sans manipuler de
 
 Effet secondaire découvert en cours de route : `actions/checkout@v4` avec `lfs: true` seul ne garantit pas le téléchargement réel du contenu LFS sur certains runners (smudge silencieusement incomplet, fichier récupéré comme
 pointeur texte de 132 octets au lieu du binaire). Un `git lfs pull` explicite après le checkout est nécessaire pour forcer le téléchargement réel.
+
+## Stratégie de collecte des données de prod
+
+Chaque requête à `predict()` qui aboutit à un calcul de probabilité est journalisée dans `data/logging.csv` : 20 features d'entrée, probabilité prédite, décision, statut (OK / INPUT_INCOMPLETE), timestamp, temps d'inférence.
+
+Limite connue : une requête dont le typage des entrées est invalide lève une ValueError avant l'écriture du log. Ces erreurs ne sont donc pas visibles dans logging.csv. Le taux d'erreur mesurable depuis ce fichier est donc un taux d'erreur applicatif (statut INPUT_INCOMPLETE), pas un taux d'erreur de saisie. Hors périmètre de correction pour ce projet.
