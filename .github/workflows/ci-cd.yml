@@ -35,6 +35,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Debug LFS file
+        run: |
+          ls -lh models/model.joblib
+          git lfs ls-files
+          file models/model.joblib
+
       - name: Login to Docker Hub (optionnel, pour le build)
         run: echo "Build local uniquement, pas de push Docker Hub"
 
