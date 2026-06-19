@@ -1,3 +1,13 @@
+---
+title: Pret A Depenser
+emoji: 💳
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Prêt à Dépenser — API de Scoring Crédit
 
 Déploiement en production d'un modèle de scoring crédit pour l'entreprise "Prêt à Dépenser". Le modèle prédit la probabilité de défaut de paiement d'un client à partir de 20 features.
