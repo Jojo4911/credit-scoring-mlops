@@ -24,3 +24,18 @@ pointeur texte de 132 octets au lieu du binaire). Un `git lfs pull` explicite ap
 Chaque requête à `predict()` qui aboutit à un calcul de probabilité est journalisée dans `data/logging.csv` : 20 features d'entrée, probabilité prédite, décision, statut (OK / INPUT_INCOMPLETE), timestamp, temps d'inférence.
 
 Limite connue : une requête dont le typage des entrées est invalide lève une ValueError avant l'écriture du log. Ces erreurs ne sont donc pas visibles dans logging.csv. Le taux d'erreur mesurable depuis ce fichier est donc un taux d'erreur applicatif (statut INPUT_INCOMPLETE), pas un taux d'erreur de saisie. Hors périmètre de correction pour ce projet.
+
+## Profilage de performance
+
+Script : `scripts/profile_inference.py`
+Lancé via : `uv run python -m scripts.profile_inference`
+
+- Chargement modèle (joblib.load) : ~896 ms, une seule fois au démarrage de l'API
+- Inférence end-to-end (predict_proba + logging CSV, moyenne sur 10 appels) : ~253 ms
+- predict_proba seul : ~1.4 ms
+
+**Analyse** :
+- le goulot principal est l'écriture CSV synchrone (~250 ms par requête).
+- Le modèle LightGBM lui-même est négligeable (1.4 ms).
+- Piste d'optimisation non retenue : écriture asynchrone ou batch du logging.
+- Hors périmètre pour ce PoC, latence acceptable en contexte de scoring crédit (pas de contrainte temps réel strict).
