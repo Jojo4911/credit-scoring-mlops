@@ -164,3 +164,19 @@ uv run --group dev jupyter notebook notebooks/data_drift_analysis.ipynb
 ```
 
 Le rapport de drift est aussi exporté en HTML dans `docs/data_drift_report.html`.
+
+## Performances
+
+Profilage mesuré via `scripts/profile_inference.py` (moyenne sur 10 appels) :
+
+- Chargement du modèle : ~896 ms (une seule fois au démarrage)
+- Inférence end-to-end (predict_proba + logging CSV) : ~253 ms
+- predict_proba seul : ~1.4 ms
+
+Le goulot principal est l'écriture CSV synchrone. Le modèle LightGBM lui-même est négligeable. Optimisation non retenue pour ce PoC : latence acceptable en contexte de scoring crédit sans contrainte temps réel strict.
+
+Pour reproduire le profilage :
+
+\```bash
+uv run python -m scripts.profile_inference
+\```
