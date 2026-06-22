@@ -63,7 +63,7 @@ uv sync
 Lancer l'API en local :
 
 ```bash
-python src/app.py
+uv run python src/app.py
 ```
 
 L'interface Gradio s'ouvre dans le navigateur. L'API accepte les 20 features suivantes (toutes optionnelles — les valeurs manquantes sont imputées par la médiane via le pipeline sklearn) :
@@ -177,6 +177,6 @@ Le goulot principal est l'écriture CSV synchrone. Le modèle LightGBM lui-même
 
 Pour reproduire le profilage :
 
-\```bash
+```bash
 uv run python -m scripts.profile_inference
-\```
+```
