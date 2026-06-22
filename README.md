@@ -135,4 +135,32 @@ docker run -p 7860:7860 pret-a-depenser-api
 
 ## Monitoring
 
-*À compléter — analyse du data drift avec Evidently*
+### Stockage des données de production
+
+Chaque requête API est loggée dans `data/logging.csv` avec les 20 features d'entrée, la probabilité prédite, la décision, un statut (`OK` / `INPUT_INCOMPLETE`), le timestamp et le temps d'inférence. Ce fichier constitue la base de données de production utilisée pour l'analyse de drift.
+
+Le statut `INPUT_INCOMPLETE` est posé quand plus de 10 features sur 20 sont manquantes. Les requêtes avec types invalides (erreur avant calcul de la probabilité) ne sont pas loggées : limite connue, documentée dans `docs/notes.md`.
+
+### Simulation de données de production
+
+Un script génère 150 requêtes simulées pour alimenter l'analyse de drift :
+
+```bash
+uv run --group dev python -m scripts.simulate_production_data
+```
+
+Trois familles : 80 requêtes normales, 50 requêtes avec drift ciblé sur `AMT_ANNUITY` et `DAYS_EMPLOYED`, 20 requêtes avec valeurs manquantes. Vider `data/logging.csv` avant de relancer pour repartir propre.
+
+### Analyse du Data Drift
+
+Le notebook `notebooks/data_drift_analysis.ipynb` compare les données de production (`data/logging.csv`, filtré sur `STATUS == 'OK'`) avec le dataset d'entraînement (`data/app_train_enriched.parquet`) via **Evidently AI** (`DataDriftPreset`).
+
+Il contient également les métriques opérationnelles : distribution des scores prédits, évolution de la latence (médiane, P95, max), répartition des statuts de requêtes.
+
+Pour lancer le notebook :
+
+```bash
+uv run --group dev jupyter notebook notebooks/data_drift_analysis.ipynb
+```
+
+Le rapport de drift est aussi exporté en HTML dans `docs/data_drift_report.html`.
