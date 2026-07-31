@@ -53,7 +53,7 @@ Déploiement en production d'un modèle de scoring crédit pour l'entreprise "Pr
 ## Installation
 
 ```bash
-git clone https://github.com/Jojo4911/pret-a-depenser.git
+git clone https://github.com/Jojo4911/credit-scoring-mlops.git
 cd pret-a-depenser
 uv sync
 ```
