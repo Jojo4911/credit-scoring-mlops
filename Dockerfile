@@ -16,6 +16,8 @@ RUN uv sync --frozen --no-dev
 # Copie uniquement du code nécessaire à l'exécution
 COPY src/ ./src/
 COPY models/ ./models/
+# Exemples précalculés pour la démo Gradio (généré par scripts/extract_demo_examples.py)
+COPY data/demo_examples.json ./data/demo_examples.json
 
 EXPOSE 7860
 

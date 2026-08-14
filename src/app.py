@@ -1,3 +1,5 @@
+import json
+
 import gradio as gr
 import joblib
 import pandas as pd
@@ -11,6 +13,9 @@ SEUIL = 0.48
 # Emplacement du fichier de logging
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+# Emplacement des exemples de démo (générés par scripts/extract_demo_examples.py)
+DEMO_EXAMPLES_PATH = DATA_DIR / "demo_examples.json"
 
 # Chargement du modèle
 MODEL_DIR = Path(__file__).resolve().parent.parent / "models"
@@ -41,7 +46,7 @@ def predict(
         instal_nb_payments: int,
     ):
 
-    # Création du DataFrame d’entrée
+    # Création du DataFrame d'entrée
     df = pd.DataFrame(
         data=[[
             ext_source_2,
@@ -88,13 +93,13 @@ def predict(
             "INSTAL_NB_PAYMENTS",
         ]
     )
-    # Démarrage timer (temps d’inférence)
+    # Démarrage timer (temps d'inférence)
     start_time = time.time()
 
     # Calcul de la prédiction de probabilité
     y_pred_proba = model.predict_proba(df)[0][1]
 
-    # Calcul du temps d’inférence
+    # Calcul du temps d'inférence
     inference_time = time.time() - start_time
 
     # Décision en fonction du seuil
@@ -107,7 +112,7 @@ def predict(
     
     # Remplissage du fichier de logging
     csv_path = DATA_DIR / "logging.csv"
-    log_df = df.copy() # Copie du DataFrame d’entrée pour récupérer les 20 variables d’un coup
+    log_df = df.copy() # Copie du DataFrame d'entrée pour récupérer les 20 variables d'un coup
     log_df["Y_PRED_PROBA"] = y_pred_proba
     log_df["MESSAGE"] = message
     log_df["STATUS"] = status
@@ -120,27 +125,39 @@ def predict(
 
     return message, y_pred_proba
 
+
+def load_demo_examples():
+    """Charge les exemples précalculés par scripts/extract_demo_examples.py, s'ils existent."""
+    if DEMO_EXAMPLES_PATH.exists():
+        with open(DEMO_EXAMPLES_PATH) as f:
+            payload = json.load(f)
+        return payload.get("examples"), payload.get("labels")
+    return None, None
+
+
+demo_examples, demo_example_labels = load_demo_examples()
+
 # Définition des variables en input
-ext_source_2 = gr.Number(value=None, label="Veuillez entrer le score externe normalisé numéro 2")
-ext_source_3 = gr.Number(value=None, label="Veuillez entrer le score externe normalisé numéro 3")
-ext_source_1 = gr.Number(value=None, label="Veuillez entrer le score externe normalisé numéro 1")
-bureau_bureau_debt_credit_ratio_max = gr.Number(value=None, label="Veuillez entrer le ratio entre la dette et le montant du crédit (Bureau du Crédit)")
-app_payment_rate = gr.Number(value=None, label="Veuillez entrer le taux de remboursement annuel")
-amt_annuity = gr.Number(value=None, label="Veuillez entrer l'annuité du Bureau de crédit")
-days_employed = gr.Number(value=None, label="Veuillez entrer le nombre de jours de l'emploi actuel")
-amt_goods_price = gr.Number(value=None, label="Veuillez entrer le prix des biens pour lesquels le crédit est accordé")
-instal_instal_days_late_max = gr.Number(value=None, label="Veuillez entrer le retard maximum en jours")
-name_education_type_higher_education = gr.Dropdown(choices=[("Oui", 1), ("Non", 0)], label="Avez-vous fait des études supérieures ?")
-name_family_status_married = gr.Dropdown(choices=[("Oui", 1), ("Non", 0)], label="Êtes-vous marié ?")
-prev_prev_app_credit_ratio_mean = gr.Number(value=None, label="Veuillez entrer le ratio de montant accordé / montant demandé")
-pos_nb_entries = gr.Number(value=None, label="Veuillez entrer le nombre de mensualités en retard")
-days_birth = gr.Number(value=None, label="Veuillez entrer votre âge en nombre de jours")
-prev_days_last_due_1st_version_max = gr.Number(value=None, label="Veuillez entrer quand la première échéance de la demande précédente a-t-elle eu lieu ?")
-pos_cnt_instalment_future_mean = gr.Number(value=None, label="Veuillez entrer la moyenne des versements restants à effectuer sur le crédit précédent")
-instal_instal_payment_ratio_mean = gr.Number(value=None, label="Veuillez entrer la moyenne du ratio payé / dû")
-prev_name_contract_status_refused_mean = gr.Number(value=None, label="Veuillez entrer la moyenne d'offres refusées au cours du mois")
-bureau_days_enddate_fact_max = gr.Number(value=None, label="Veuillez entrer le nombre de jours écoulés depuis la clôture du crédit CB au moment de la demande auprès de Home Credit (uniquement pour les crédits clôturés)")
-instal_nb_payments = gr.Number(value=None, label="Veuillez entrer le nombre de paiement passés pour des crédits précédents")
+ext_source_2 = gr.Number(value=None, label="External normalised score 2", info="Between 0 and 1")
+ext_source_3 = gr.Number(value=None, label="External normalised score 3", info="Between 0 and 1")
+ext_source_1 = gr.Number(value=None, label="External normalised score 1", info="Between 0 and 1")
+bureau_bureau_debt_credit_ratio_max = gr.Number(value=None, label="Max debt to credit ratio (credit bureau)")
+app_payment_rate = gr.Number(value=None, label="Annual payment rate")
+amt_annuity = gr.Number(value=None, label="Loan annuity amount", info="Currency units")
+days_employed = gr.Number(value=None, label="Days in current job", info="Negative value")
+amt_goods_price = gr.Number(value=None, label="Price of financed goods", info="Currency units")
+instal_instal_days_late_max = gr.Number(value=None, label="Max late payment, in days")
+name_education_type_higher_education = gr.Dropdown(choices=[("Yes", 1), ("No", 0)], label="Higher education?")
+name_family_status_married = gr.Dropdown(choices=[("Yes", 1), ("No", 0)], label="Married?")
+prev_prev_app_credit_ratio_mean = gr.Number(value=None, label="Mean approved / requested credit ratio (previous applications)")
+pos_nb_entries = gr.Number(value=None, label="Number of late installments (POS)")
+days_birth = gr.Number(value=None, label="Age in days", info="Negative value")
+prev_days_last_due_1st_version_max = gr.Number(value=None, label="Max due date, first version (previous applications)")
+pos_cnt_instalment_future_mean = gr.Number(value=None, label="Mean remaining installments (previous credit)")
+instal_instal_payment_ratio_mean = gr.Number(value=None, label="Mean paid / due ratio (installments)")
+prev_name_contract_status_refused_mean = gr.Number(value=None, label="Mean refusal rate (previous applications)")
+bureau_days_enddate_fact_max = gr.Number(value=None, label="Days since last closed credit (bureau)")
+instal_nb_payments = gr.Number(value=None, label="Number of past installment payments")
 
 # Définition des entrées dans Gradio
 demo = gr.Interface(
@@ -168,7 +185,18 @@ demo = gr.Interface(
         instal_nb_payments,
     ],
     # Définition des sorties dans Gradio
-    outputs=[gr.Textbox(label="Verdict :"), gr.Number(label="Probabilité de défaut de paiement :")]
+    outputs=[gr.Textbox(label="Verdict"), gr.Number(label="Default probability")],
+    examples=demo_examples,
+    example_labels=demo_example_labels,
+    title="Credit default scoring API",
+    description=(
+        "LightGBM pipeline predicting the probability of payment default from 20 features. "
+        "Decision threshold set at 0.48, optimised on a business cost function weighting "
+        "false negatives ten times more than false positives (FN x 10 + FP x 1). "
+        "All fields are optional, missing values are median-imputed by the sklearn pipeline."
+    ),
+    article="Source: https://github.com/Jojo4911/credit-scoring-mlops",
+    flagging_mode="never",
 )
 
 if __name__ == "__main__":
