@@ -3,7 +3,8 @@
 .github/
 tests/
 notebooks/
-data/
+data/*.csv
+data/*.parquet
 docs/
 *.md
 .env
